@@ -4,6 +4,8 @@ import { validateEnvConfig } from './shared/config/env.config';
 import { DatabaseModule } from './modules/database/database.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -13,12 +15,10 @@ import { AppService } from './app.service';
       validate: validateEnvConfig,
     }),
     DatabaseModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply();
-  }
-}
+export class AppModule {}

@@ -3,6 +3,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { AxiosError } from 'axios';
 import { Request } from 'express';
 import { DateTime } from 'luxon';
+import { withBaseResponse } from '../utils/with-base-response.util';
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
@@ -26,14 +27,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       httpStatus = exception.getStatus();
       message = this.getExceptionMessage(exception);
       name = exception.name;
+    } else if (exception instanceof Error) {
+      message = exception.message;
+      name = exception.name;
     }
-    const responseBody = {
-      error: { status: httpStatus, name, message },
-      timestamp: DateTime.now().toISO(),
-      path: httpAdapter.getRequestUrl(request),
-      requestId: request.headers['x-request-id'],
-    };
-    httpAdapter.reply(response, responseBody, httpStatus);
+    httpAdapter.reply(
+      response,
+      withBaseResponse({
+        success: false,
+        message,
+        data: null,
+        timestamp: DateTime.now().toJSDate(),
+      }),
+      httpStatus
+    );
   }
   private getExceptionMessage(exception: HttpException): string {
     const response = exception.getResponse();

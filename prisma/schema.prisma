@@ -8,13 +8,95 @@ datasource db {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  firstName   String    @map("first_name") @db.VarChar(50)
-  lastName    String    @map("last_name") @db.VarChar(50)
-  email       String?   @db.VarChar(100)
-  password    String    @db.VarChar(255)
-  phoneNumber String    @unique @map("phone_number") @db.VarChar(15)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName   String   @map("first_name") @db.VarChar(50)
+  lastName    String   @map("last_name") @db.VarChar(50)
+  email       String   @unique @db.VarChar(100)
+  password    String   @db.VarChar(255)
+  phoneNumber String?  @unique @map("phone_number") @db.VarChar(15)
+  address     String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  farmer  Farmer?
+  reviews Review[]
+}
+
+model Farmer {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String             @unique @map("user_id") @db.Uuid
+  location           String?            @db.VarChar(255)
+  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
+  rating             Float              @default(0.0)
+  farmDetails        String?            @map("farm_details") @db.Text
+
+  user     User      @relation(fields: [userId], references: [id])
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String   @db.VarChar(100)
+  description  String?  @db.Text
+  stock        Int      @default(0)
+  pricePerUnit Decimal  @map("price_per_unit") @db.Decimal(10, 2)
+  unit         Unit     @default(KG)
+  isAvailable  Boolean  @default(true) @map("is_available")
+  coverImage   String?  @map("cover_image") @db.VarChar(255)
+  images       String[] @map("images") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  farmerId   String  @map("farmer_id") @db.Uuid
+  categoryId String? @map("category_id") @db.Uuid
+
+  farmer   Farmer    @relation(fields: [farmerId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+  reviews  Review[]
+}
+
+model Category {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  iconUrl     String?  @map("icon_url") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  products Product[]
+}
+
+model Review {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rating    Int      @db.Integer
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  productId String @map("product_id") @db.Uuid
+  userId    String @map("user_id") @db.Uuid
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+enum Unit {
+  KG
+  GRAM
+  POUND
+  LITER
+  PIECE
+  DOZEN
+  BUNCH
+  BAG
+  BOTTLE
+  BOX
+  BUNDLE
+  CARTON
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

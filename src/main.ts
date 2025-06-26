@@ -8,9 +8,11 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { swaggerConfig } from './shared/config/swagger.config';
 import compression from 'compression';
 import { GlobalExceptionFilter } from './shared/filters/all-exceptions.filter';
+import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
+    bodyParser: true,
   });
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
@@ -19,11 +21,7 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 3000;
   app.setGlobalPrefix('api');
   app.use(compression());
-  app.enableCors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept',
-  });
+  app.use(cookieParser());
   const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, documentFactory());
   await app.listen(port, () => {
