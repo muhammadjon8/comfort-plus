@@ -1,17 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  NotFoundException,
+  UseGuards,
+} from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { BaseResponse } from '../../shared/types';
-import { withBaseResponse } from '../../shared/utils/with-base-response.util';
+import { BaseResponse } from '#/shared/types';
+import { withBaseResponse } from '#/shared/utils/with-base-response.util';
 import { DateTime } from 'luxon';
 import { Category } from './types/category.type';
+import { Roles } from '#/shared/decorators/roles.decorator';
+import { RolesGuard } from '#/shared/guards/roles.guard';
 
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
+  @UseGuards(RolesGuard)
   @Post()
+  @Roles('admin')
   async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<BaseResponse<Category>> {
     const data = await this.categoryService.createCategory(createCategoryDto);
     return withBaseResponse({
@@ -47,7 +62,9 @@ export class CategoryController {
     });
   }
 
+  @UseGuards(RolesGuard)
   @Patch(':id')
+  @Roles('admin')
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto
@@ -64,7 +81,9 @@ export class CategoryController {
     });
   }
 
+  @UseGuards(RolesGuard)
   @Delete(':id')
+  @Roles('admin')
   async remove(@Param('id') id: string): Promise<BaseResponse<null>> {
     const data = await this.categoryService.removeCategory(id);
     if (!data) {
