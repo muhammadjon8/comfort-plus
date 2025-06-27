@@ -20,8 +20,8 @@ async function main() {
     PHONE_NUMBER: process.env.SUPER_ADMIN_PHONE_NUMBER,
   };
 
-    const parsedEnv = envSchema.safeParse(env);
-    console.log('Parsed environment variables:', parsedEnv);
+  const parsedEnv = envSchema.safeParse(env);
+  console.log('Parsed environment variables:', parsedEnv);
 
   if (!parsedEnv.success) {
     console.error('Environment variable validation failed:', parsedEnv.error.format());
@@ -43,6 +43,7 @@ async function main() {
       email: parsedEnv.data.EMAIL || '',
       password: await hash(parsedEnv.data.PASSWORD),
       phoneNumber: parsedEnv.data.PHONE_NUMBER || '',
+      role: 'ADMIN',
     },
   });
   console.log('Super admin created:', superAdmin);

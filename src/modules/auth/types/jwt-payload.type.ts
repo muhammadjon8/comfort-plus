@@ -1,5 +1,7 @@
+import { Role } from '#/shared/types/role.enum';
+
 export type JwtPayload = {
   sub: string;
   userEmail: string;
-  roles: 'admin' | 'user';
+  role: Role;
 };

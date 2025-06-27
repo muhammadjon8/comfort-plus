@@ -19,6 +19,7 @@ import { DateTime } from 'luxon';
 import { Category } from './types/category.type';
 import { Roles } from '#/shared/decorators/roles.decorator';
 import { RolesGuard } from '#/shared/guards/roles.guard';
+import { Role } from '../../shared/types/role.enum';
 
 @Controller('category')
 export class CategoryController {
@@ -26,7 +27,7 @@ export class CategoryController {
 
   @UseGuards(RolesGuard)
   @Post()
-  @Roles('admin')
+  @Roles(Role.ADMIN)
   async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<BaseResponse<Category>> {
     const data = await this.categoryService.createCategory(createCategoryDto);
     return withBaseResponse({
@@ -64,7 +65,7 @@ export class CategoryController {
 
   @UseGuards(RolesGuard)
   @Patch(':id')
-  @Roles('admin')
+  @Roles(Role.ADMIN)
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto
@@ -83,7 +84,7 @@ export class CategoryController {
 
   @UseGuards(RolesGuard)
   @Delete(':id')
-  @Roles('admin')
+  @Roles(Role.ADMIN)
   async remove(@Param('id') id: string): Promise<BaseResponse<null>> {
     const data = await this.categoryService.removeCategory(id);
     if (!data) {

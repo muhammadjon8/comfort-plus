@@ -3,7 +3,7 @@ import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 export class CreateCategoryDto {
   @IsString()
   @IsNotEmpty()
-  @Length(2)
+  @Length(2, 50)
   name: string;
 
   @IsString()
@@ -13,8 +13,4 @@ export class CreateCategoryDto {
   @IsString()
   @IsOptional()
   iconUrl?: string;
-
-  @IsString({ each: true })
-  @IsOptional()
-  tags?: string[];
 }

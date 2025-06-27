@@ -8,6 +8,7 @@ import { JwtPayload } from './types';
 import { LoginDto } from './dto/login.dto';
 import { UserDto } from '../users/dto/user.dto';
 import { Request, Response } from 'express';
+import { Role } from '../../shared/types/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const newUser = await this.usersService.createUser({ ...registerDto });
-    const payload: JwtPayload = { sub: newUser.id, userEmail: newUser.email, roles: 'user' };
+    const payload: JwtPayload = { sub: newUser.id, userEmail: newUser.email, role: Role.USER };
     const [accessToken, refreshToken] = await Promise.all([
       this.authTokensService.generateAccessToken(payload),
       this.authTokensService.generateRefreshToken(payload),
@@ -35,7 +36,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new BadRequestException('Invalid password');
     }
-    const payload: JwtPayload = { sub: user.id, userEmail: user.email, roles: 'user' };
+    const payload: JwtPayload = { sub: user.id, userEmail: user.email, role: Role[user.role as keyof typeof Role] };
     const [accessToken, refreshToken] = await Promise.all([
       this.authTokensService.generateAccessToken(payload),
       this.authTokensService.generateRefreshToken(payload),
@@ -62,7 +63,7 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('User not found');
     }
-    const newPayload: JwtPayload = { sub: user.id, userEmail: user.email, roles: 'user' };
+    const newPayload: JwtPayload = { sub: user.id, userEmail: user.email, role: Role[user.role as keyof typeof Role] };
     const [accessToken, refreshToken] = await Promise.all([
       this.authTokensService.generateAccessToken(newPayload),
       this.authTokensService.generateRefreshToken(newPayload),
