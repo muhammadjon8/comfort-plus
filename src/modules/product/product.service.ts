@@ -3,16 +3,22 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { DatabaseService } from '../database/database.service';
 import { randomUUID } from 'node:crypto';
-import { Unit } from '@prisma/client';
+import { Prisma, Unit } from '@prisma/client';
 
 @Injectable()
 export class ProductService {
   constructor(private readonly prisma: DatabaseService) {}
-  async createProduct(dto: CreateProductDto, farmerId: string) {
+  async createProduct(dto: CreateProductDto, userId: string) {
+    const farmer = await this.prisma.farmer.findUnique({
+      where: { userId },
+    });
+    if (!farmer) {
+      throw new NotFoundException('Farmer not found');
+    }
     const existing = await this.prisma.product.findFirst({
       where: {
         name: dto.name,
-        farmerId: farmerId,
+        farmerId: farmer.id,
       },
     });
 
@@ -36,7 +42,7 @@ export class ProductService {
           coverImage,
           isAvailable: true,
           stock: dto.stock,
-          farmerId,
+          farmerId: farmer.id,
           categoryId: dto.categoryId,
         },
       }),
@@ -46,17 +52,26 @@ export class ProductService {
     }
     return {
       ...product,
+      pricePerUnit: (product.pricePerUnit as Prisma.Decimal).toNumber(),
       coverImage,
-      images: dto.images,
+      images: dto.images.map((image) => ({ id: randomUUID(), imageUrl: image })),
     };
   }
 
   async findAll() {
-    return this.prisma.product.findMany({
+    const data = await this.prisma.product.findMany({
       include: {
         ProductImages: true,
       },
     });
+    return data.map((product) => ({
+      ...product,
+      pricePerUnit: (product.pricePerUnit as Prisma.Decimal).toNumber(),
+      images: product.ProductImages.map((image) => ({
+        id: image.id,
+        imageUrl: image.imageUrl,
+      })),
+    }));
   }
 
   async findOne(id: string) {
@@ -72,7 +87,18 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    return product;
+    return {
+      ...product,
+      pricePerUnit: (product.pricePerUnit as Prisma.Decimal).toNumber(),
+      images: product.ProductImages.map((image) => ({
+        id: image.id,
+        imageUrl: image.imageUrl,
+      })),
+      category: {
+        id: product.category.id,
+        name: product.category.name,
+      },
+    };
   }
 
   async update(id: string, dto: UpdateProductDto) {
@@ -81,25 +107,44 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    return this.prisma.product.update({
+    const data = await this.prisma.product.update({
       where: { id },
       data: dto,
+      include: {
+        ProductImages: true,
+      },
     });
+    return {
+      ...data,
+      pricePerUnit: (data.pricePerUnit as Prisma.Decimal).toNumber(),
+      images: data.ProductImages.map((image) => ({
+        id: image.id,
+        imageUrl: image.imageUrl,
+      })),
+    };
   }
 
-  async remove(id: string, farmerId: string) {
+  async remove(id: string, userId: string) {
     const product = await this.prisma.product.findUnique({ where: { id } });
-
     if (!product) throw new NotFoundException('Product not found');
-    if (product.farmerId !== farmerId) {
+
+    const farmer = await this.prisma.farmer.findUnique({ where: { userId } });
+    if (!farmer) throw new NotFoundException('Farmer not found');
+
+    if (product.farmerId !== farmer.id) {
       throw new ForbiddenException('Not allowed to delete this product');
     }
 
-    await this.prisma.$transaction([
+    const [deletedImages, deletedProduct] = await this.prisma.$transaction([
       this.prisma.productImages.deleteMany({ where: { productId: id } }),
       this.prisma.product.delete({ where: { id } }),
     ]);
 
-    return { message: 'Product deleted successfully' };
+    return {
+      ...deletedProduct,
+      pricePerUnit: (deletedProduct.pricePerUnit as Prisma.Decimal).toNumber(),
+      images: [],
+      deletedImagesCount: deletedImages.count,
+    };
   }
 }

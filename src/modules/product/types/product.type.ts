@@ -1,16 +1,15 @@
-import { Unit } from './units.type';
+import { UnitType } from './unit.type';
 
 export type Product = {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   stock: number;
   pricePerUnit: number;
-  unit: Unit;
+  unit: UnitType;
   isAvailable: boolean;
-  coverImage: string;
-  images: string[];
-  tags: string[];
+  coverImage: string | null;
+  images: { id: string; imageUrl: string }[];
   categoryId: string;
   farmerId: string;
   createdAt: Date;
