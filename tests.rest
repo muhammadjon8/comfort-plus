@@ -1,0 +1,8 @@
+POST http://localhost:3000/api/category
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OGFiNTA5My1lZjVmLTQyZTEtOTllZS1kZTY3MWU2OTVhYzQiLCJ1c2VyRW1haWwiOiJoZWxsbzNAZ21haWwyLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MTI2MjU1NCwiZXhwIjoxNzUxMjk4NTU0fQ.NoXOIv1Cpg6GBg2shchqZoFJ5TlmU_KKIa-qXgWs8c8
+
+{
+    "name": "New Category",
+    "description": "This is a new category"
+}

@@ -18,7 +18,7 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
 
     if (!user || !requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('Access denied: Admins only');
+      throw new ForbiddenException('Access denied: You are not allowed to perform this action');
     }
 
     return true;

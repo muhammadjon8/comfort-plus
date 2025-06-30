@@ -17,13 +17,13 @@ import { DateTime } from 'luxon';
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.FARMER)
   @Post()
+  @Roles(Role.FARMER, Role.ADMIN)
   async create(
     @Body() createProductDto: CreateProductDto,
     @CurrentUser() user: JwtPayload
   ): Promise<BaseResponse<Product>> {
-    const data = await this.productService.createProduct(createProductDto, user.sub);
+    const data = await this.productService.createProduct(createProductDto, user.id);
     return withBaseResponse({
       success: true,
       message: 'Product created successfully',
@@ -71,7 +71,7 @@ export class ProductController {
   @Roles(Role.FARMER)
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentUser() user: JwtPayload): Promise<BaseResponse<Product>> {
-    const data = await this.productService.remove(id, user.sub);
+    const data = await this.productService.remove(id, user.id);
     return withBaseResponse({
       success: true,
       message: 'Product deleted successfully',

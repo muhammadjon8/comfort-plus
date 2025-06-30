@@ -19,13 +19,14 @@ import { DateTime } from 'luxon';
 import { Category } from './types/category.type';
 import { Roles } from '#/shared/decorators/roles.decorator';
 import { RolesGuard } from '#/shared/guards/roles.guard';
-import { Role } from '../../shared/types/role.enum';
+import { Role } from '#/shared/types/role.enum';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
   @Roles(Role.ADMIN)
   async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<BaseResponse<Category>> {
