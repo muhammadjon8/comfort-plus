@@ -5,13 +5,13 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../shared/guards/roles.guard';
 import { Roles } from '../../shared/decorators/roles.decorator';
-import { Role } from '@prisma/client';
 import { CurrentUser } from '../../shared/guards/current-user.guard';
 import { JwtPayload } from '../auth/types';
 import { BaseResponse } from '../../shared/types';
 import { Product } from './types/product.type';
 import { withBaseResponse } from '../../shared/utils/with-base-response.util';
 import { DateTime } from 'luxon';
+import { Role } from '../../shared/types/role.enum';
 
 @Controller('product')
 export class ProductController {

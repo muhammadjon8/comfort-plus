@@ -3,7 +3,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { DatabaseService } from '../database/database.service';
 import { randomUUID } from 'node:crypto';
-import { Prisma, Unit } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ProductService {
@@ -52,7 +53,7 @@ export class ProductService {
     }
     return {
       ...product,
-      pricePerUnit: (product.pricePerUnit as Prisma.Decimal).toNumber(),
+      pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
       coverImage,
       images: dto.images.map((image) => ({ id: randomUUID(), imageUrl: image })),
     };
@@ -66,7 +67,7 @@ export class ProductService {
     });
     return data.map((product) => ({
       ...product,
-      pricePerUnit: (product.pricePerUnit as Prisma.Decimal).toNumber(),
+      pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
       images: product.ProductImages.map((image) => ({
         id: image.id,
         imageUrl: image.imageUrl,
@@ -89,7 +90,7 @@ export class ProductService {
 
     return {
       ...product,
-      pricePerUnit: (product.pricePerUnit as Prisma.Decimal).toNumber(),
+      pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
       images: product.ProductImages.map((image) => ({
         id: image.id,
         imageUrl: image.imageUrl,
@@ -116,7 +117,7 @@ export class ProductService {
     });
     return {
       ...data,
-      pricePerUnit: (data.pricePerUnit as Prisma.Decimal).toNumber(),
+      pricePerUnit: (data.pricePerUnit as Decimal).toNumber(),
       images: data.ProductImages.map((image) => ({
         id: image.id,
         imageUrl: image.imageUrl,
@@ -142,7 +143,7 @@ export class ProductService {
 
     return {
       ...deletedProduct,
-      pricePerUnit: (deletedProduct.pricePerUnit as Prisma.Decimal).toNumber(),
+      pricePerUnit: (deletedProduct.pricePerUnit as Decimal).toNumber(),
       images: [],
       deletedImagesCount: deletedImages.count,
     };

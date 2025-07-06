@@ -1,7 +1,6 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, IsUUID, Length } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UnitType } from '../types/unit.type';
-import { Unit } from '@prisma/client';
+import { Unit, UnitType } from '../types/unit.type';
 
 export class CreateProductDto {
   @IsString()
@@ -25,7 +24,6 @@ export class CreateProductDto {
 
   @IsEnum(Unit)
   unit: UnitType;
-
   @IsString()
   @IsNotEmpty()
   @IsUUID()
