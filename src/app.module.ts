@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ProductModule } from './modules/product/product.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { FarmerModule } from './modules/farmer/farmer.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UploadModule } from './modules/upload/upload.module';
     CategoryModule,
     ProductModule,
     UploadModule,
+    FarmerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

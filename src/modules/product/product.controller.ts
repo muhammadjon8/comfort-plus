@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery, ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -22,17 +22,40 @@ import { Multer } from 'multer';
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
-  @ApiBearerAuth()
   @Post()
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created successfully' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Create Product DTO with image files',
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Fresh Tomatoes' },
+        description: { type: 'string', example: 'Organic and tasty tomatoes.' },
+        stock: { type: 'number', example: 20 },
+        pricePerUnit: { type: 'number', example: 1.99 },
+        unit: { type: 'string', example: 'KG' },
+        categoryId: { type: 'string', format: 'uuid' },
+        coverImage: { type: 'string', example: 'https://...' },
+        images: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+      required: ['name', 'stock', 'pricePerUnit', 'unit', 'categoryId', 'images'],
+    },
+  })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.FARMER, Role.ADMIN)
   @UseInterceptors(FilesInterceptor('images'))
   async create(
     @Body() createProductDto: CreateProductDto,
     @UploadedFiles() files: Multer.File[],
-    @CurrentUser() user: JwtPayload
+    @CurrentUser() user: JwtPayload,
   ): Promise<BaseResponse<Product>> {
     const data = await this.productService.createProduct(createProductDto, user.id, files);
     return withBaseResponse({
@@ -42,6 +65,7 @@ export class ProductController {
       timestamp: DateTime.now().toJSDate(),
     });
   }
+
 
   @Get()
   @ApiOperation({ summary: 'Get all products with optional filters' })
