@@ -7,11 +7,16 @@ import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ProductFilterDto } from './dto/filter-product.dto';
 import { Product } from './types/product.type';
+import { Multer } from 'multer';
+import { UploadService } from '../upload/aws-s3.service';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly prisma: DatabaseService) {}
-  async createProduct(dto: CreateProductDto, userId: string) {
+  constructor(
+    private readonly prisma: DatabaseService,
+    private readonly uploadService: UploadService
+  ) {}
+  async createProduct(dto: CreateProductDto, userId: string, files: Multer.File[]) {
     const farmer = await this.prisma.farmer.findUnique({
       where: { userId },
     });
@@ -28,12 +33,17 @@ export class ProductService {
     if (existing) {
       throw new ConflictException('You already created a product with this name');
     }
-    const coverImage = dto.coverImage ?? 'https://picsum.photos/id/116/200/300';
+
+    // Upload images and get URLs
+    const uploadedImageUrls = await this.uploadService.uploadFiles(files);
+
+    const coverImage = uploadedImageUrls[0] ?? 'https://picsum.photos/id/116/200/300';
 
     const id = randomUUID();
+
     const [images, product] = await this.prisma.$transaction([
       this.prisma.productImages.createMany({
-        data: dto.images.map((image) => ({ imageUrl: image, productId: id })),
+        data: uploadedImageUrls.map((url) => ({ imageUrl: url, productId: id })),
       }),
       this.prisma.product.create({
         data: {
@@ -50,14 +60,19 @@ export class ProductService {
         },
       }),
     ]);
+
     if (images.count === 0) {
       throw new ConflictException('Failed to create product images');
     }
+
     return {
       ...product,
       pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
       coverImage,
-      images: dto.images.map((image) => ({ id: randomUUID(), imageUrl: image })),
+      images: uploadedImageUrls.map((url) => ({
+        id: randomUUID(),
+        imageUrl: url,
+      })),
     };
   }
 
@@ -71,10 +86,10 @@ export class ProductService {
           mode: 'insensitive',
         },
       }),
-      ...(category && { category: { id: category } }),
+      ...(category && { categoryId: category }),
       ...(minPrice !== undefined || maxPrice !== undefined
         ? {
-            price: {
+            pricePerUnit: {
               ...(minPrice !== undefined ? { gte: minPrice } : {}),
               ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
             },
@@ -86,9 +101,7 @@ export class ProductService {
     const [products, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
-        orderBy: {
-          [sortBy]: orderBy,
-        },
+        orderBy: sortBy && orderBy ? { [sortBy]: orderBy } : { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
         include: {
@@ -100,15 +113,17 @@ export class ProductService {
       }),
     ]);
 
-    return {
-      data: products.map((product) => ({
-        ...product,
-        pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
-        images: product.ProductImages.map((img) => ({
-          id: img.id,
-          imageUrl: img.imageUrl,
-        })),
+    const formattedProducts: Product[] = products.map((product) => ({
+      ...product,
+      pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
+      images: product.ProductImages.map((img) => ({
+        id: img.id,
+        imageUrl: img.imageUrl,
       })),
+    }));
+
+    return {
+      data: formattedProducts,
       total,
       page,
       limit,

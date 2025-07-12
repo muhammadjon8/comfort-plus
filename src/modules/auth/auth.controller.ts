@@ -1,4 +1,5 @@
 import { Body, Controller, Post, UseInterceptors } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiCookieAuth } from '@nestjs/swagger';
 import { RefreshTokenInterceptor } from './interceptors/refresh-token.interceptor';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -8,17 +9,18 @@ import { LoginDto } from './dto/login.dto';
 import { GetRefreshToken } from './decorators/cookie-getter.decorator';
 import { SetRefreshToken } from './decorators/set-refresh-token';
 import { RefreshTokenResponse } from './types/refresh-token-response';
-import { ConfigService } from '@nestjs/config';
 
+@ApiTags('Auth')
 @Controller('auth')
 @UseInterceptors(RefreshTokenInterceptor)
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @SetRefreshToken()
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @ApiBody({ type: RegisterDto })
   async register(
     @Body() registerDto: RegisterDto
   ): Promise<RefreshTokenResponse<{ accessToken: string; user: UserDto }>> {
@@ -34,6 +36,9 @@ export class AuthController {
 
   @Post('login')
   @SetRefreshToken()
+  @ApiOperation({ summary: 'Login a user' })
+  @ApiResponse({ status: 200, description: 'User logged in successfully' })
+  @ApiBody({ type: LoginDto })
   async login(@Body() loginDto: LoginDto): Promise<RefreshTokenResponse<{ accessToken: string; user: UserDto }>> {
     const { accessToken, refreshToken, user } = await this.authService.login(loginDto);
     return {
@@ -47,6 +52,9 @@ export class AuthController {
 
   @Post('refresh-token')
   @SetRefreshToken()
+  @ApiCookieAuth() // To let Swagger know you're using cookies
+  @ApiOperation({ summary: 'Refresh access token using refresh token from cookies' })
+  @ApiResponse({ status: 200, description: 'Access token refreshed successfully' })
   async refreshToken(@GetRefreshToken() refreshToken: string): Promise<RefreshTokenResponse<{ accessToken: string }>> {
     const { accessToken, refreshToken: newRefreshToken } = await this.authService.refreshToken(refreshToken);
     return {

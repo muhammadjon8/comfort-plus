@@ -23,7 +23,7 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
   const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, documentFactory());
+  SwaggerModule.setup('api/docs', app, documentFactory());
   await app.listen(port, () => {
     Logger.log(`ENV: ${configService.get('NODE_ENV')} PORT: ${port}`, 'Bootstrap');
     Logger.log(`Server is running on http://localhost:${port}/api`, 'Bootstrap');
