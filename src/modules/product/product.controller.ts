@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -12,6 +12,7 @@ import { Product } from './types/product.type';
 import { withBaseResponse } from '../../shared/utils/with-base-response.util';
 import { DateTime } from 'luxon';
 import { Role } from '../../shared/types/role.enum';
+import { ProductFilterDto } from './dto/filter-product.dto';
 
 @Controller('product')
 export class ProductController {
@@ -33,12 +34,13 @@ export class ProductController {
   }
 
   @Get()
-  async findAll(): Promise<BaseResponse<Product[]>> {
-    const data = await this.productService.findAll();
+  async findAll(@Query() filters: ProductFilterDto): Promise<BaseResponse<Product[]>> {
+    const { data, limit, page, total } = await this.productService.findAll(filters);
     return withBaseResponse({
       success: true,
       message: 'Products retrieved successfully',
       data,
+      metadata: { pagination: { page, limit, total } },
       timestamp: DateTime.now().toJSDate(),
     });
   }

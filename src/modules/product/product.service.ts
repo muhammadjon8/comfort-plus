@@ -5,6 +5,8 @@ import { DatabaseService } from '../database/database.service';
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ProductFilterDto } from './dto/filter-product.dto';
+import { Product } from './types/product.type';
 
 @Injectable()
 export class ProductService {
@@ -59,20 +61,58 @@ export class ProductService {
     };
   }
 
-  async findAll() {
-    const data = await this.prisma.product.findMany({
-      include: {
-        ProductImages: true,
-      },
-    });
-    return data.map((product) => ({
-      ...product,
-      pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
-      images: product.ProductImages.map((image) => ({
-        id: image.id,
-        imageUrl: image.imageUrl,
+  async findAll(filters: ProductFilterDto): Promise<{ data: Product[]; total: number; page: number; limit: number }> {
+    const { search, category, minPrice, maxPrice, sortBy, orderBy, unit, page = 1, limit = 10 } = filters;
+
+    const where: Prisma.ProductWhereInput = {
+      ...(search && {
+        name: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      }),
+      ...(category && { category: { id: category } }),
+      ...(minPrice !== undefined || maxPrice !== undefined
+        ? {
+            price: {
+              ...(minPrice !== undefined ? { gte: minPrice } : {}),
+              ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
+            },
+          }
+        : {}),
+      ...(unit && { unit }),
+    };
+
+    const [products, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        orderBy: {
+          [sortBy]: orderBy,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          ProductImages: true,
+        },
+      }),
+      this.prisma.product.count({
+        where,
+      }),
+    ]);
+
+    return {
+      data: products.map((product) => ({
+        ...product,
+        pricePerUnit: (product.pricePerUnit as Decimal).toNumber(),
+        images: product.ProductImages.map((img) => ({
+          id: img.id,
+          imageUrl: img.imageUrl,
+        })),
       })),
-    }));
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: string) {
